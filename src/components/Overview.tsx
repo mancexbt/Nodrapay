@@ -1,8 +1,9 @@
+import { TAGLINE } from '@/lib/network'
 import { useMemo, useState } from 'react'
 import { ConnectKitButton } from 'connectkit'
 import { useAccount } from 'wagmi'
 import { ChevronDown, Plus } from 'lucide-react'
-import { Identity, PageHeader } from '@/components/table'
+import { Identity } from '@/components/table'
 import { Activity } from '@/components/Activity'
 import { GettingStarted } from '@/components/GettingStarted'
 import { useActivity } from '@/hooks/useActivity'
@@ -156,7 +157,7 @@ export function Overview({ data, loading, now, balance, onCreate, onOpen }: { da
     return (
       <div className="card p-6 sm:p-8">
         <p className="eyebrow">Nodra</p>
-        <h1 className="display mt-2 max-w-lg text-balance text-4xl font-bold leading-tight">Escrow and conditional payouts for any token</h1>
+        <h1 className="display mt-2 max-w-lg text-balance text-4xl font-bold leading-tight">{TAGLINE}</h1>
         <p className="mt-3 max-w-md text-pretty text-sm" style={{ color: 'var(--muted)' }}>
           Lock funds with milestones and an arbiter, schedule payouts, run payroll and vest tokens. Connect a wallet to see what needs your action.
         </p>
@@ -180,7 +181,32 @@ export function Overview({ data, loading, now, balance, onCreate, onOpen }: { da
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Overview" blurb="What needs your action, what is unlocking, and what you have locked up." action={<CreateMenu onPick={onCreate} />} />
+      <section
+        aria-label={TAGLINE}
+        className="card relative overflow-hidden p-6 sm:p-7"
+        style={{ background: 'linear-gradient(120deg, rgba(134,237,207,0.38) 0%, rgba(94,221,77,0.14) 48%, #ffffff 100%)' }}
+      >
+        <div className="flex flex-wrap items-start justify-between gap-5">
+          <div className="min-w-0 max-w-xl">
+            <p className="eyebrow">Overview</p>
+            <h1 className="display mt-2 text-balance text-3xl font-bold leading-tight sm:text-4xl">
+              Escrow and conditional payouts for{' '}
+              <span style={{ background: 'linear-gradient(90deg, #05b959, #0a8f6a)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>USDC</span>
+            </h1>
+            <p className="mt-2.5 max-w-md text-pretty text-sm" style={{ color: 'var(--muted)' }}>
+              Lock funds, release them as work is approved, and keep payroll and vesting on schedule.
+            </p>
+            <ul className="mt-4 flex flex-wrap gap-2" aria-label="What you can do">
+              {['Milestones', 'Arbiter', 'Recipient claim', 'Payroll', 'Vesting'].map((c) => (
+                <li key={c} className="rounded-full px-3 py-1 text-xs font-semibold" style={{ background: 'rgba(255,255,255,0.75)', border: '1px solid var(--border)', color: 'var(--ink-2)' }}>
+                  {c}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <CreateMenu onPick={onCreate} />
+        </div>
+      </section>
 
       {!loading && <GettingStarted balance={balance} data={data} onCreate={() => onCreate('escrow')} />}
 

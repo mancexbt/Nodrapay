@@ -181,6 +181,9 @@ export default function App() {
             <span className="display text-lg font-bold">Nodra</span>
           </a>
           <div className="flex items-center gap-2">
+            <a href="#about" className="btn btn-ghost btn-sm">
+              About
+            </a>
             <button className="btn btn-ghost btn-sm" onClick={() => setPage('escrow')}>
               Open app
             </button>

@@ -7,7 +7,7 @@ import { Identity } from '@/components/table'
 import { Activity } from '@/components/Activity'
 import { AlertsCard } from '@/components/AlertsCard'
 import { GetStarted } from '@/components/GettingStarted'
-import { Landing } from '@/components/Landing'
+import { About, Landing } from '@/components/Landing'
 import { useActivity } from '@/hooks/useActivity'
 import type { VaultData } from '@/hooks/useVaultData'
 import { GROUP_LABEL, PLAN_PAGES, type CreateKind, type NavGroup, type PageId } from '@/lib/plans'
@@ -15,7 +15,6 @@ import {
   KIND_META,
   DISPUTE_WINDOW_SECONDS,
   escrowClaimOpensAt,
-  USDC_ADDRESS,
   fmtDateTime,
   fmtSpan,
   fmtToken,
@@ -26,33 +25,6 @@ import {
   unlockedByParams,
   type KindId,
 } from '@/lib/vault'
-
-interface Entry {
-  symbol: string
-  decimals: number
-  raw: bigint
-  token: string
-}
-type Totals = Map<string, Entry>
-
-function add(map: Totals, item: { token: string; symbol: string; decimals: number }, raw: bigint) {
-  const key = item.token.toLowerCase()
-  const prev = map.get(key)
-  map.set(key, { symbol: item.symbol, decimals: item.decimals, token: key, raw: (prev?.raw ?? 0n) + raw })
-}
-
-/** Different tokens are never added together: show the main one big and list the rest. */
-function summarize(map: Totals): { value: string; sub: string; text: string } {
-  const entries = [...map.values()].sort((a, b) => {
-    if (a.token === USDC_ADDRESS.toLowerCase()) return -1
-    if (b.token === USDC_ADDRESS.toLowerCase()) return 1
-    return a.raw < b.raw ? 1 : -1
-  })
-  if (entries.length === 0) return { value: '0.00', sub: 'USDC', text: '0.00 USDC' }
-  const [first, ...rest] = entries
-  const sub = rest.length ? `${first.symbol} + ${rest.map((r) => `${fmtToken(r.raw, r.decimals)} ${r.symbol}`).join(', ')}` : first.symbol
-  return { value: fmtToken(first.raw, first.decimals), sub, text: `${fmtToken(first.raw, first.decimals)} ${sub}` }
-}
 
 const MENU_GROUPS: { label: string; items: { id: CreateKind; label: string; hint: string }[] }[] = (['payments', 'plans', 'locks'] as NavGroup[]).map((g) => ({
   label: GROUP_LABEL[g],
@@ -106,16 +78,9 @@ export function Overview({ data, loading, now, balance, onCreate, onOpen, onEmai
   const activity = useActivity(address, data)
 
   const summary = useMemo(() => {
-    const claimable: Totals = new Map()
-    const incoming: Totals = new Map()
-    const committed: Totals = new Map()
     const upcoming: { id: bigint; kind: KindId; at: bigint; amount: bigint; who: string; symbol: string; decimals: number }[] = []
     for (const s of data?.schedules ?? []) {
-      const outstanding = s.total - s.claimed
       if (sameAddr(s.beneficiary, address)) {
-        const ready = releasableAt(s, now)
-        add(claimable, s, ready)
-        add(incoming, s, outstanding - ready)
         if (!s.cancelled && s.claimed < s.total) {
           const at = nextUnlockAt(s, now)
           if (at !== null && !isContinuous(s)) {
@@ -123,12 +88,6 @@ export function Overview({ data, loading, now, balance, onCreate, onOpen, onEmai
           }
         }
       }
-      // Tokens you locked for yourself already show under "locked for you".
-      if (sameAddr(s.funder, address) && !sameAddr(s.beneficiary, address)) add(committed, s, outstanding)
-    }
-    for (const e of data?.escrows ?? []) {
-      if (sameAddr(e.beneficiary, address)) add(incoming, e, e.remaining)
-      if (sameAddr(e.depositor, address)) add(committed, e, e.remaining)
     }
     upcoming.sort((a, b) => (a.at < b.at ? -1 : 1))
 
@@ -152,13 +111,9 @@ export function Overview({ data, loading, now, balance, onCreate, onOpen, onEmai
         actions.push({ key: `s-${s.id}`, title: `Claim ${fmtToken(releasableAt(s, now), s.decimals)} ${s.symbol}`, detail: `${KIND_META[s.kind as KindId].label}${s.memo ? ` · ${s.memo}` : ''}`, page: PLAN_PAGES.find((p) => p.kind === s.kind)?.id ?? 'overview' })
       }
     }
-    return { claimable, incoming, committed, upcoming: upcoming.slice(0, 3), actions: actions.slice(0, 4), actionCount: actions.length }
+    return { upcoming: upcoming.slice(0, 3), actions: actions.slice(0, 4), actionCount: actions.length }
   }, [data, address, now])
 
-  const claimable = summarize(summary.claimable)
-  const incoming = summarize(summary.incoming)
-  const committed = summarize(summary.committed)
-  const dash = loading ? '...' : undefined
 
   return (
     <div className="space-y-5">
@@ -218,6 +173,8 @@ export function Overview({ data, loading, now, balance, onCreate, onOpen, onEmai
 
       {isConnected && <AlertsCard />}
 
+      <About />
+
       {isConnected && summary.actions.length > 0 && (
         <section className="card p-5" aria-label="Needs your action">
           <h2 className="display mb-3 text-lg font-semibold">
@@ -239,30 +196,6 @@ export function Overview({ data, loading, now, balance, onCreate, onOpen, onEmai
             ))}
           </ul>
         </section>
-      )}
-
-      {isConnected && (
-      <section className="card card-feature p-6">
-        <p className="eyebrow">Claimable now</p>
-        <p className="display mt-1 text-4xl font-bold tabular-nums [overflow-wrap:anywhere] sm:text-5xl">{dash ?? claimable.value}</p>
-        <p className="mt-1 text-sm" style={{ color: 'var(--muted)' }}>
-          {dash ? '' : claimable.sub}
-        </p>
-        <dl className="mt-5 grid grid-cols-2 gap-4 border-t pt-4" style={{ borderColor: 'rgba(255,255,255,0.16)' }}>
-          <div>
-            <dt className="eyebrow">Locked for you</dt>
-            <dd className="mt-0.5 text-base font-semibold tabular-nums [overflow-wrap:anywhere]" style={{ color: '#fff' }}>
-              {dash ?? incoming.text}
-            </dd>
-          </div>
-          <div>
-            <dt className="eyebrow">You locked up</dt>
-            <dd className="mt-0.5 text-base font-semibold tabular-nums [overflow-wrap:anywhere]" style={{ color: '#fff' }}>
-              {dash ?? committed.text}
-            </dd>
-          </div>
-        </dl>
-      </section>
       )}
 
       {isConnected && (

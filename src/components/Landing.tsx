@@ -1,4 +1,6 @@
 import { ArrowRight } from 'lucide-react'
+import { buildAddressExplorerUrl } from '@/onchain-facts'
+import { CHAIN_ID, VAULT_ADDRESS } from '@/lib/vault'
 import { PLAN_BY_ID, type PageId } from '@/lib/plans'
 
 const STEPS = [
@@ -54,5 +56,41 @@ export function Landing({ onOpen }: { onOpen: (page: PageId) => void }) {
         </ul>
       </section>
     </>
+  )
+}
+
+const ABOUT_POINTS = [
+  { title: 'The contract holds the money', body: 'Funds sit in a smart contract on Arc. Nobody at Nodra can move them, pause them or change the rules.' },
+  { title: 'No fees, no admin', body: 'The contract has no owner, no upgrade key and no fee. It only does what each escrow or plan says.' },
+  { title: 'USDC first, other tokens too', body: 'Built for USDC on Arc. Other standard ERC-20 tokens work as well.' },
+  { title: 'Tested, not yet audited', body: 'The contract was reviewed and tested thoroughly, but it has not had an independent audit. Start small.' },
+]
+
+/** About section for the front page. */
+export function About() {
+  return (
+    <section id="about" className="card space-y-5 scroll-mt-6 p-6 sm:p-8" aria-label="About Nodra">
+      <div className="max-w-2xl">
+        <p className="eyebrow">About</p>
+        <h2 className="display mt-1 text-2xl font-bold">Payments that wait for the right moment</h2>
+        <p className="mt-2 text-pretty text-sm sm:text-base" style={{ color: 'var(--muted)' }}>
+          Nodra lets you lock USDC for someone and decide when it is paid: when you approve the work, when a milestone is met, or when a date arrives. The same tools cover
+          payroll, vesting, lockups and token claims. Everything is recorded onchain, so both sides can see exactly what is held and what happens next.
+        </p>
+      </div>
+      <ul className="grid gap-3 sm:grid-cols-2">
+        {ABOUT_POINTS.map((p) => (
+          <li key={p.title} className="inner p-4">
+            <h3 className="display text-base font-semibold">{p.title}</h3>
+            <p className="mt-1 text-pretty text-sm" style={{ color: 'var(--muted)' }}>
+              {p.body}
+            </p>
+          </li>
+        ))}
+      </ul>
+      <a className="inline-flex min-h-11 items-center text-sm font-semibold hover:underline" style={{ color: 'var(--success)' }} href={buildAddressExplorerUrl(CHAIN_ID, VAULT_ADDRESS)} target="_blank" rel="noopener noreferrer">
+        View the contract on the explorer
+      </a>
+    </section>
   )
 }

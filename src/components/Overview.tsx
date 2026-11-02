@@ -173,10 +173,10 @@ export function Overview({ data, loading, now, balance, onCreate, onOpen, onEmai
           <span style={{ background: 'linear-gradient(90deg, #05b959, #0a8f6a)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>USDC</span>
         </h1>
         <p className="mt-3 max-w-lg text-pretty text-sm sm:text-base" style={{ color: 'var(--muted)' }}>
-          Lock funds, release them as work is approved, and keep payroll and vesting on schedule.
+          Lock funds and release them as work is approved.
         </p>
         <ul className="mt-4 flex flex-wrap gap-2" aria-label="What you can do">
-          {['Milestones', 'Arbiter', 'Recipient claim', 'Payroll', 'Vesting'].map((c) => (
+          {['Milestones'].map((c) => (
             <li key={c} className="rounded-full px-3 py-1 text-xs font-semibold" style={{ background: 'rgba(255,255,255,0.75)', border: '1px solid var(--border)', color: 'var(--ink-2)' }}>
               {c}
             </li>

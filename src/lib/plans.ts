@@ -62,7 +62,8 @@ export const GROUP_LABEL: Record<NavGroup, string> = {
   locks: 'Locks',
 }
 
-export const PLAN_PAGES: PlanPage[] = [
+/** Every plan type the contract supports. Only the ones not listed in HIDDEN_PLANS appear in the UI. */
+const ALL_PLANS: PlanPage[] = [
   {
     id: 'scheduled',
     kind: 0,
@@ -290,6 +291,11 @@ export const PLAN_PAGES: PlanPage[] = [
     },
   },
 ]
+
+/** Plan types kept out of the UI for now. The contract still supports them. */
+const HIDDEN_PLANS: ReadonlySet<PlanPage['id']> = new Set(['grants', 'investor', 'claims', 'timelock', 'lp'])
+
+export const PLAN_PAGES: PlanPage[] = ALL_PLANS.filter((p) => !HIDDEN_PLANS.has(p.id))
 
 export const PLAN_BY_ID = Object.fromEntries(PLAN_PAGES.map((p) => [p.id, p])) as Record<PlanPage['id'], PlanPage>
 export const PLAN_BY_KIND = Object.fromEntries(PLAN_PAGES.map((p) => [p.kind, p])) as Record<KindId, PlanPage>

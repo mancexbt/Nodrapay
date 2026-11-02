@@ -184,7 +184,7 @@ export function Overview({ data, loading, now, balance, onOpen, onEmail }: { dat
         <div>
           <p className="display text-base font-semibold">Everything else is in the app</p>
           <p className="text-sm" style={{ color: 'var(--muted)' }}>
-            Escrows, payroll, vesting, lockups and claims, each with its own list and tools.
+            Escrows, scheduled payouts, payroll, vesting and treasury lockups, each with its own list and tools.
           </p>
         </div>
         <button className="btn btn-primary" onClick={() => onOpen('escrow')}>

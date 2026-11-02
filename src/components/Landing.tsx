@@ -14,8 +14,7 @@ const FEATURES: { id: PageId; title: string; body: string }[] = [
   { id: 'scheduled', title: PLAN_BY_ID.scheduled.title, body: PLAN_BY_ID.scheduled.blurb },
   { id: 'payroll', title: PLAN_BY_ID.payroll.title, body: PLAN_BY_ID.payroll.blurb },
   { id: 'vesting', title: PLAN_BY_ID.vesting.title, body: PLAN_BY_ID.vesting.blurb },
-  { id: 'claims', title: PLAN_BY_ID.claims.title, body: PLAN_BY_ID.claims.blurb },
-  { id: 'timelock', title: PLAN_BY_ID.timelock.title, body: PLAN_BY_ID.timelock.blurb },
+  { id: 'treasury', title: PLAN_BY_ID.treasury.title, body: PLAN_BY_ID.treasury.blurb },
 ]
 
 /** Front-page explainer shown before a wallet is connected. */
@@ -75,7 +74,7 @@ export function About() {
         <h2 className="display mt-1 text-2xl font-bold">Payments that wait for the right moment</h2>
         <p className="mt-2 text-pretty text-sm sm:text-base" style={{ color: 'var(--muted)' }}>
           Nodra lets you lock USDC for someone and decide when it is paid: when you approve the work, when a milestone is met, or when a date arrives. The same tools cover
-          payroll, vesting, lockups and token claims. Everything is recorded onchain, so both sides can see exactly what is held and what happens next.
+          payroll, vesting and treasury lockups. Everything is recorded onchain, so both sides can see exactly what is held and what happens next.
         </p>
       </div>
       <ul className="grid gap-3 sm:grid-cols-2">

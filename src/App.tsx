@@ -167,7 +167,7 @@ export default function App() {
   )
 
   const overview = (
-    <Overview data={data} loading={loading} now={now} balance={balance} onCreate={startCreate} onOpen={setPage} onEmail={emailEnabled ? () => setEmailOpen(true) : undefined} />
+    <Overview data={data} loading={loading} now={now} balance={balance} onOpen={setPage} onEmail={emailEnabled ? () => setEmailOpen(true) : undefined} />
   )
 
   if (isHome) {

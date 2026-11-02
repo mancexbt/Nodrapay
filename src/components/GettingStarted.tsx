@@ -8,14 +8,12 @@ export function GetStarted({
   isConnected,
   balance,
   data,
-  onCreate,
   onBrowse,
   onEmail,
 }: {
   isConnected: boolean
   balance?: bigint
   data?: VaultData
-  onCreate: () => void
   onBrowse: () => void
   onEmail?: () => void
 }) {
@@ -54,14 +52,9 @@ export function GetStarted({
       title: 'Create your first escrow',
       body: 'Lock funds for someone and release them as work is approved.',
       actions: (
-        <div className="flex flex-wrap gap-2">
-          <button className="btn btn-primary btn-sm" disabled={!isConnected} onClick={onCreate}>
-            Create escrow
-          </button>
-          <button className="btn btn-ghost btn-sm" onClick={onBrowse}>
-            See all options
-          </button>
-        </div>
+        <button className="btn btn-primary btn-sm" onClick={onBrowse}>
+          Open the app
+        </button>
       ),
     },
   ]

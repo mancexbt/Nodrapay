@@ -1,6 +1,6 @@
 # Nodra
 
-Escrow and conditional payouts for USDC on Arc (other ERC-20 tokens work too), plus payroll, vesting and lockups: lock funds for someone and release them when work is approved, schedule payouts, run payroll, vest tokens to your team, and lock investor allocations, treasuries and LP tokens.
+Escrow and conditional payouts for businesses on Arc, paid in USDC (other ERC-20 tokens work too), plus payroll, vesting and lockups: lock funds for someone and release them when work is approved, schedule payouts, run payroll, vest tokens to your team, and lock investor allocations, treasuries and LP tokens.
 
 Built with [Arc Studio](https://studio.arc.io)
 

@@ -1,8 +1,7 @@
 import { TAGLINE } from '@/lib/network'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { ConnectKitButton } from 'connectkit'
 import { useAccount } from '@/hooks/useAccount'
-import { ChevronDown, Plus } from 'lucide-react'
 import { Identity } from '@/components/table'
 import { Activity } from '@/components/Activity'
 import { AlertsCard } from '@/components/AlertsCard'
@@ -10,7 +9,7 @@ import { GetStarted } from '@/components/GettingStarted'
 import { About, Landing } from '@/components/Landing'
 import { useActivity } from '@/hooks/useActivity'
 import type { VaultData } from '@/hooks/useVaultData'
-import { GROUP_LABEL, PLAN_PAGES, type CreateKind, type NavGroup, type PageId } from '@/lib/plans'
+import { PLAN_PAGES, type PageId } from '@/lib/plans'
 import {
   KIND_META,
   DISPUTE_WINDOW_SECONDS,
@@ -26,54 +25,7 @@ import {
   type KindId,
 } from '@/lib/vault'
 
-const MENU_GROUPS: { label: string; items: { id: CreateKind; label: string; hint: string }[] }[] = (['payments', 'plans', 'locks'] as NavGroup[]).map((g) => ({
-  label: GROUP_LABEL[g],
-  items: [
-    ...(g === 'payments' ? [{ id: 'escrow' as CreateKind, label: 'Escrow', hint: 'Hold funds until approved' }] : []),
-    ...PLAN_PAGES.filter((p) => p.group === g).map((p) => ({ id: p.id as CreateKind, label: p.title, hint: p.blurb })),
-  ],
-}))
-
-function CreateMenu({ onPick }: { onPick: (k: CreateKind) => void }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <div className="relative">
-      <button className="btn btn-primary" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
-        <Plus className="size-4" /> Create <ChevronDown className="size-4" />
-      </button>
-      {open && (
-        <>
-          <button aria-label="Close menu" className="fixed inset-0 z-30 cursor-default" onClick={() => setOpen(false)} />
-          <div role="menu" className="card absolute right-0 z-40 mt-2 max-h-[70dvh] w-80 overflow-y-auto p-1.5" style={{ background: 'var(--sheet-bg)', boxShadow: '0 18px 40px -16px rgba(0,21,13,0.3)' }}>
-            {MENU_GROUPS.map((group) => (
-              <div key={group.label} className="pb-1">
-                <p className="eyebrow px-3 pb-1 pt-2">{group.label}</p>
-                {group.items.map((m) => (
-                  <button
-                    key={m.id}
-                    role="menuitem"
-                    className="nav-item h-auto flex-col items-start gap-0 py-2 text-left"
-                    onClick={() => {
-                      setOpen(false)
-                      onPick(m.id)
-                    }}
-                  >
-                    <span style={{ color: 'var(--ink)' }}>{m.label}</span>
-                    <span className="line-clamp-1 text-xs font-normal" style={{ color: 'var(--subtle)' }}>
-                      {m.hint}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  )
-}
-
-export function Overview({ data, loading, now, balance, onCreate, onOpen, onEmail }: { data?: VaultData; loading: boolean; now: bigint; balance?: bigint; onCreate: (k: CreateKind) => void; onOpen: (page: PageId) => void; onEmail?: () => void }) {
+export function Overview({ data, loading, now, balance, onOpen, onEmail }: { data?: VaultData; loading: boolean; now: bigint; balance?: bigint; onOpen: (page: PageId) => void; onEmail?: () => void }) {
   const { address, isConnected } = useAccount()
   const activity = useActivity(address, data)
 
@@ -125,7 +77,7 @@ export function Overview({ data, loading, now, balance, onCreate, onOpen, onEmai
         <p className="eyebrow">Nodra</p>
         <h1 className="display mt-2 max-w-2xl text-balance text-4xl font-bold leading-tight sm:text-5xl">
           Escrow and conditional payouts for{' '}
-          <span style={{ background: 'linear-gradient(90deg, #05b959, #0a8f6a)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>USDC</span>
+          <span style={{ background: 'linear-gradient(90deg, #05b959, #0a8f6a)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>businesses</span>
         </h1>
         <p className="mt-3 max-w-lg text-pretty text-sm sm:text-base" style={{ color: 'var(--muted)' }}>
           Lock funds and release them as work is approved.
@@ -140,8 +92,7 @@ export function Overview({ data, loading, now, balance, onCreate, onOpen, onEmai
         <div className="mt-6 flex flex-wrap items-center gap-2">
           {isConnected ? (
             <>
-              <CreateMenu onPick={onCreate} />
-              <button className="btn btn-ghost" onClick={() => onOpen('escrow')}>
+              <button className="btn btn-primary" onClick={() => onOpen('escrow')}>
                 Open the app
               </button>
             </>
@@ -167,7 +118,7 @@ export function Overview({ data, loading, now, balance, onCreate, onOpen, onEmai
         </div>
       </section>
 
-      {!loading && <GetStarted isConnected={isConnected} balance={balance} data={data} onCreate={() => onCreate('escrow')} onBrowse={() => onOpen('escrow')} onEmail={onEmail} />}
+      {!loading && <GetStarted isConnected={isConnected} balance={balance} data={data} onBrowse={() => onOpen('escrow')} onEmail={onEmail} />}
 
       {!isConnected && <Landing onOpen={onOpen} />}
 

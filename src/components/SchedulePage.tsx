@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useAccount } from 'wagmi'
+import { useAccount } from '@/hooks/useAccount'
 import { Plus } from 'lucide-react'
 import { Badge, EmptyState, Progress } from '@/components/ui'
 import { formatUnitsExact } from '@/onchain-money'

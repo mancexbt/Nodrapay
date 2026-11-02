@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useAccount } from 'wagmi'
+import { useAccount } from '@/hooks/useAccount'
 import { zeroAddress, type Address } from 'viem'
 import { Plus, Trash2 } from 'lucide-react'
 import { Field, AmountInput, ProblemNote, Segmented, Sheet, Toggle, TxButton } from '@/components/ui'

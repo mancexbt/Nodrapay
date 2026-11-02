@@ -1,7 +1,10 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useAccount, usePublicClient, useSwitchChain, useWriteContract } from 'wagmi'
-import { BaseError, ContractFunctionRevertedError, erc20Abi, type Address, type Hash } from 'viem'
+import { usePublicClient, useSwitchChain, useWriteContract } from 'wagmi'
+import { BaseError, ContractFunctionRevertedError, encodeFunctionData, erc20Abi, type Abi, type Address, type Hash } from 'viem'
+import { useAccount } from '@/hooks/useAccount'
+import { useSession } from '@/lib/session'
+import { SessionExpiredError, sendViaCircle } from '@/lib/circleTx'
 import { toast } from 'sonner'
 import { CHAIN_ID, VAULT_ADDRESS } from '@/lib/vault'
 import { buildTxExplorerUrl } from '@/onchain-facts'
@@ -47,14 +50,24 @@ export function describeError(error: unknown): string | null {
     }
     return error.shortMessage
   }
+  if (error instanceof Error && error.name === 'TransactionFailedError') return 'The transaction failed onchain. Check your balance and try again.'
   return error instanceof Error ? error.message : 'Something went wrong. Please try again.'
 }
 
 export function useVaultTx() {
   const { address, chainId } = useAccount()
   const { switchChainAsync } = useSwitchChain()
-  const { writeContractAsync } = useWriteContract()
+  const { writeContractAsync: walletWrite } = useWriteContract()
+  const { session, signOut } = useSession()
   const client = usePublicClient({ chainId: CHAIN_ID })
+
+  /** Browser wallets sign through wagmi; email wallets go through Circle. Callers use one API for both. */
+  const writeContractAsync = useMemo(() => {
+    if (!session) return walletWrite
+    const viaCircle = async (params: { address: Address; abi: Abi; functionName: string; args?: readonly unknown[] }): Promise<Hash> =>
+      sendViaCircle(session, params.address, encodeFunctionData({ abi: params.abi, functionName: params.functionName, args: params.args }))
+    return viaCircle as unknown as typeof walletWrite
+  }, [session, walletWrite])
   const queryClient = useQueryClient()
   const [phase, setPhase] = useState<TxPhase>('idle')
   const [stepLabel, setStepLabel] = useState('')
@@ -107,6 +120,7 @@ export function useVaultTx() {
         await queryClient.invalidateQueries()
         return true
       } catch (error) {
+        if (error instanceof SessionExpiredError) signOut()
         const message = describeError(error)
         if (message) toast.error(message)
         return false
@@ -115,7 +129,7 @@ export function useVaultTx() {
         setStepLabel('')
       }
     },
-    [client, chainId, switchChainAsync, queryClient],
+    [client, chainId, switchChainAsync, queryClient, signOut],
   )
 
   return { execute, approveStep, writeContractAsync, phase, stepLabel, lastHash, busy: phase !== 'idle' }

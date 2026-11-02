@@ -1,7 +1,12 @@
 import { IS_MAINNET, NETWORK_NAME } from '@/lib/network'
-import { useState, type ComponentType } from 'react'
+import { useEffect, useState, type ComponentType } from 'react'
 import { ConnectKitButton } from 'connectkit'
-import { useAccount } from 'wagmi'
+import { useAccount } from '@/hooks/useAccount'
+import { AccountMenu } from '@/components/AccountMenu'
+import { EmailSignIn } from '@/components/EmailSignIn'
+import { useEmailWalletsEnabled } from '@/lib/api'
+import { useSession } from '@/lib/session'
+import { navigate, useRoute } from '@/hooks/useRoute'
 import {
   Briefcase,
   CalendarClock,
@@ -54,7 +59,7 @@ interface NavEntry {
 }
 
 const NAV: NavEntry[] = [
-  { id: 'overview', label: 'Overview' },
+  { id: 'overview', label: 'Home' },
   { id: 'escrow', label: 'Escrow', group: 'payments' },
   ...PLAN_PAGES.map((p): NavEntry => ({ id: p.id, label: p.label, group: p.group })),
 ]
@@ -62,11 +67,20 @@ const GROUPS: NavGroup[] = ['payments', 'plans', 'locks']
 
 export default function App() {
   const { address, isConnected } = useAccount()
+  const { session } = useSession()
+  const emailEnabled = useEmailWalletsEnabled()
+  const [emailOpen, setEmailOpen] = useState(false)
   const { data, isLoading, isError } = useVaultData(address)
   const { data: balance } = useUsdcBalance()
   const activity = useActivity(address, data)
   const now = useNow(1000)
-  const [page, setPage] = useState<PageId>('overview')
+  const route = useRoute()
+  const page: PageId = route.name === 'home' ? 'overview' : route.page
+  const setPage = navigate
+  const isHome = page === 'overview'
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [page])
   const [creating, setCreating] = useState<CreateKind | null>(null)
   const [schedulePlan, setSchedulePlan] = useState<PlanPage | null>(null)
   const [openCount, setOpenCount] = useState(0)
@@ -107,13 +121,96 @@ export default function App() {
 
   const activePlan = page !== 'overview' && page !== 'escrow' ? PLAN_BY_ID[page] : null
 
+  const accountControls = (
+    <>
+      {balance !== undefined && (
+        <span className="flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold tabular-nums md:hidden" style={{ background: 'var(--surface-strong)', border: '1px solid var(--border)' }}>
+          <TokenUSDC variant="branded" size={14} /> {fmtUsdc(balance)}
+        </span>
+      )}
+      {session ? (
+        <AccountMenu />
+      ) : (
+        <>
+          {emailEnabled && (
+            <button className="btn btn-ghost btn-sm" onClick={() => setEmailOpen(true)}>
+              Sign in with email
+            </button>
+          )}
+          <ConnectKitButton showAvatar={false} />
+        </>
+      )}
+    </>
+  )
+
+  const footer = (
+    <footer className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-x-6 gap-y-1 px-4 pb-20 text-xs md:px-8" style={{ color: 'var(--subtle)' }}>
+      <span>{IS_MAINNET ? 'Nodra runs on Arc mainnet. Transactions use real funds and cannot be undone.' : 'Nodra runs on Arc Testnet. Testnet tokens have no value.'}</span>
+      <span className="flex flex-wrap items-center">
+        <a className="inline-flex min-h-11 items-center px-2 hover:underline" href={buildAddressExplorerUrl(CHAIN_ID, VAULT_ADDRESS)} target="_blank" rel="noopener noreferrer">
+          Contract
+        </a>
+        <a className="inline-flex min-h-11 items-center px-2 hover:underline" href="https://docs.arc.io" target="_blank" rel="noopener noreferrer">
+          Arc docs
+        </a>
+      </span>
+    </footer>
+  )
+
+  const overlays = (
+    <>
+      {emailEnabled && <EmailSignIn open={emailOpen} onClose={() => setEmailOpen(false)} />}
+      <CreateEscrow key={`escrow-${openCount}`} open={creating === 'escrow'} onClose={close} />
+      <CreatePayroll key={`payroll-${openCount}`} open={creating === 'payroll'} onClose={close} />
+      {schedulePlan && <CreateSchedule key={`${schedulePlan.id}-${openCount}`} plan={schedulePlan} open={creating === schedulePlan.id} onClose={close} />}
+    </>
+  )
+
+  const overview = (
+    <Overview data={data} loading={loading} now={now} balance={balance} onCreate={startCreate} onOpen={setPage} onEmail={emailEnabled ? () => setEmailOpen(true) : undefined} />
+  )
+
+  if (isHome) {
+    return (
+      <div className="min-h-dvh">
+        <header className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-4 py-4 md:px-8">
+          <a href="#/" className="flex items-center gap-2.5" aria-label="Nodra home">
+            <span className="flex size-9 items-center justify-center rounded-xl" style={{ background: 'var(--accent)', color: 'var(--accent-ink)' }}>
+              <Vault className="size-5" />
+            </span>
+            <span className="display text-lg font-bold">Nodra</span>
+          </a>
+          <div className="flex items-center gap-2">
+            <button className="btn btn-ghost btn-sm" onClick={() => setPage('escrow')}>
+              Open app
+            </button>
+            {accountControls}
+          </div>
+        </header>
+        <ActivityContext.Provider value={activity.data}>
+          <main className="mx-auto w-full max-w-5xl space-y-6 px-4 pb-16 pt-2 md:px-8">
+            <WrongNetworkBanner />
+            {isError && (
+              <p className="text-sm" style={{ color: 'var(--danger)' }}>
+                Could not load your payouts. Check your connection and try again.
+              </p>
+            )}
+            {overview}
+          </main>
+        </ActivityContext.Provider>
+        {footer}
+        {overlays}
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[256px_1fr]">
       <aside
         className="sticky top-0 hidden h-dvh flex-col gap-4 overflow-y-auto border-r p-4 md:flex"
         style={{ borderColor: 'var(--border)', background: 'rgba(255,255,255,0.78)', backdropFilter: 'blur(12px)' }}
       >
-        <div className="flex items-center gap-2.5 px-1 pt-1">
+        <a href="#/" className="flex items-center gap-2.5 px-1 pt-1" aria-label="Nodra home">
           <div className="flex size-9 items-center justify-center rounded-xl" style={{ background: 'var(--accent)', color: 'var(--accent-ink)' }}>
             <Vault className="size-5" />
           </div>
@@ -123,7 +220,7 @@ export default function App() {
               {NETWORK_NAME}
             </p>
           </div>
-        </div>
+        </a>
         <nav className="space-y-4" aria-label="Sections">
           <div>{navButton(NAV[0], false)}</div>
           {GROUPS.map((g) => (
@@ -167,14 +264,7 @@ export default function App() {
             </div>
             <p className="display text-base font-bold">Nodra</p>
           </div>
-          <div className="ml-auto flex items-center gap-2">
-            {balance !== undefined && (
-              <span className="flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold tabular-nums md:hidden" style={{ background: 'var(--surface-strong)', border: '1px solid var(--border)' }}>
-                <TokenUSDC variant="branded" size={14} /> {fmtUsdc(balance)}
-              </span>
-            )}
-            <ConnectKitButton showAvatar={false} />
-          </div>
+          <div className="ml-auto flex items-center gap-2">{accountControls}</div>
         </header>
 
         <nav className="flex gap-1 overflow-x-auto px-4 pb-3 md:hidden" aria-label="Sections">
@@ -189,27 +279,14 @@ export default function App() {
               Could not load your payouts. Check your connection and try again.
             </p>
           )}
-          {page === 'overview' && <Overview data={data} loading={loading} now={now} balance={balance} onCreate={startCreate} onOpen={setPage} />}
           {page === 'escrow' && <EscrowPage escrows={escrows} loading={loading} now={now} onNew={() => startCreate('escrow')} />}
           {activePlan && <SchedulePage key={activePlan.id} kind={activePlan.kind} schedules={schedules} loading={loading} now={now} onNew={() => startCreate(activePlan.id)} />}
         </main>
         </ActivityContext.Provider>
-        <footer className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-x-6 gap-y-1 px-4 pb-20 text-xs md:px-8" style={{ color: 'var(--subtle)' }}>
-          <span>{IS_MAINNET ? 'Nodra runs on Arc mainnet. Transactions use real funds and cannot be undone.' : 'Nodra runs on Arc Testnet. Testnet tokens have no value.'}</span>
-          <span className="flex flex-wrap items-center">
-            <a className="inline-flex min-h-11 items-center px-2 hover:underline" href={buildAddressExplorerUrl(CHAIN_ID, VAULT_ADDRESS)} target="_blank" rel="noopener noreferrer">
-              Contract
-            </a>
-            <a className="inline-flex min-h-11 items-center px-2 hover:underline" href="https://docs.arc.io" target="_blank" rel="noopener noreferrer">
-              Arc docs
-            </a>
-          </span>
-        </footer>
+        {footer}
       </div>
 
-      <CreateEscrow key={`escrow-${openCount}`} open={creating === 'escrow'} onClose={close} />
-      <CreatePayroll key={`payroll-${openCount}`} open={creating === 'payroll'} onClose={close} />
-      {schedulePlan && <CreateSchedule key={`${schedulePlan.id}-${openCount}`} plan={schedulePlan} open={creating === schedulePlan.id} onClose={close} />}
+      {overlays}
     </div>
   )
 }

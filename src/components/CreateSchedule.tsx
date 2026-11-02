@@ -1,6 +1,6 @@
 import { NETWORK_NAME } from '@/lib/network'
 import { useMemo, useState } from 'react'
-import { useAccount } from 'wagmi'
+import { useAccount } from '@/hooks/useAccount'
 import type { Address } from 'viem'
 import { AmountInput, DurationInput, Field, ProblemNote, Sheet, Toggle, TxButton } from '@/components/ui'
 import { TokenField } from '@/components/TokenField'

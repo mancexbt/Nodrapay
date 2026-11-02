@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useAccount, usePublicClient, useReadContract, useReadContracts } from 'wagmi'
+import { usePublicClient, useReadContract, useReadContracts } from 'wagmi'
+import { useAccount } from '@/hooks/useAccount'
 import { erc20Abi, isAddress, type Address } from 'viem'
 import { labelFor, loadTokenLabels } from '@/lib/tokens'
 import {

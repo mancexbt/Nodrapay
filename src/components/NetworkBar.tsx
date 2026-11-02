@@ -1,4 +1,5 @@
-import { useAccount, useSwitchChain } from 'wagmi'
+import { useSwitchChain } from 'wagmi'
+import { useAccount } from '@/hooks/useAccount'
 import { AlertTriangle } from 'lucide-react'
 import { CHAIN_ID } from '@/lib/vault'
 import { NETWORK_NAME } from '@/lib/network'

@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ConnectKitButton } from 'connectkit'
-import { useAccount } from 'wagmi'
+import { useAccount } from '@/hooks/useAccount'
 import { AlertCircle, Loader2, X } from 'lucide-react'
 import { DURATION_UNITS, fmtToken, type DurationUnitId } from '@/lib/vault'
 import type { TxPhase } from '@/hooks/useVaultTx'

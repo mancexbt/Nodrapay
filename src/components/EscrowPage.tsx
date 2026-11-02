@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useAccount } from 'wagmi'
+import { useAccount } from '@/hooks/useAccount'
 import { Check, Plus } from 'lucide-react'
 import { zeroAddress } from 'viem'
 import { Badge, EmptyState, Progress, Sheet, Stat, TxButton } from '@/components/ui'

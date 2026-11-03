@@ -16,6 +16,7 @@ function useLoop() {
   const reduce = useReducedMotion()
   return (tracks: Track) => {
     const animate: Record<string, Value | Value[]> = {}
+    const initial: Record<string, Value> = {}
     const transition: Record<string, { duration: number; times?: number[]; repeat?: number; ease: 'linear' }> = {}
     for (const [prop, [times, vals]] of Object.entries(tracks)) {
       if (reduce) {
@@ -25,13 +26,16 @@ function useLoop() {
           if (Math.abs(t - 0.6) < Math.abs((times[best] ?? 0) - 0.6)) best = i
         })
         animate[prop] = vals[best] ?? vals[0] ?? 0
+        initial[prop] = animate[prop]
         transition[prop] = { duration: 0, ease: 'linear' }
       } else {
         animate[prop] = vals
+        initial[prop] = vals[0] ?? 0
         transition[prop] = { duration: D, times, repeat: Infinity, ease: 'linear' }
       }
     }
-    return { initial: false as const, animate, transition }
+    // initial={false} would skip the animation on mount, so only the still frame uses it.
+    return { initial: reduce ? (false as const) : initial, animate, transition }
   }
 }
 
@@ -100,7 +104,7 @@ export function FlowGraphic() {
         {/* Milestones */}
         {MILESTONES.map((m) => {
           const lit = loop({
-            fill: [T, ['#ffffff', '#ffffff', '#ffffff', '#ffffff', ...T.slice(4).map((t) => (t >= m.start ? GREEN : '#ffffff'))]],
+            fill: [T, T.map((t) => (t >= m.start && t < 1 ? GREEN : '#ffffff'))],
             scale: [T, T.map((t) => (t >= m.start && t < m.start + 0.06 ? 1.25 : 1))],
           })
           return (

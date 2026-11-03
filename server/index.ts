@@ -1,9 +1,15 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
 import { ApiError, handleCircle } from './circle'
-import { ALERTS_ENABLED, CIRCLE_API_KEY, PORT } from './env'
+import { ALERTS_DRY_RUN, ALERTS_ENABLED, CIRCLE_API_KEY, PORT, PUBLIC_URL } from './env'
 import { confirm, runNotifier, subscribe, unsubscribe } from './alerts'
 
 const hits = new Map<string, { n: number; reset: number }>()
+/** Browsers allowed to call this API from another address (comma separated). Same-origin needs no entry. */
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS ?? '').split(',').map((o) => o.trim()).filter(Boolean)
+setInterval(() => {
+  const now = Date.now()
+  for (const [k, h] of hits) if (h.reset < now) hits.delete(k)
+}, 60_000).unref()
 /** Small in-memory limiter: max `limit` calls per minute per client and route. */
 function limited(req: IncomingMessage, route: string, limit: number): boolean {
   const fwd = req.headers['x-forwarded-for']
@@ -45,7 +51,19 @@ async function readJson(req: IncomingMessage): Promise<Record<string, unknown>> 
 const server = createServer((req, res) => {
   void (async () => {
     const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`)
-    const base = process.env.ALERTS_PUBLIC_URL ?? url.origin
+    const origin = req.headers.origin
+    if (origin && ALLOWED_ORIGINS.includes(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin)
+      res.setHeader('Vary', 'Origin')
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+    }
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204)
+      return res.end()
+    }
+    // Links in emails must never be built from the request's Host header, which a caller controls.
+    const base = PUBLIC_URL ?? (ALERTS_DRY_RUN ? url.origin : undefined)
     try {
       if (req.method === 'GET' && url.pathname === '/api/config') return send(res, 200, { emailWallets: Boolean(CIRCLE_API_KEY), alerts: ALERTS_ENABLED })
       if (req.method === 'POST' && url.pathname === '/api/circle') {
@@ -56,6 +74,7 @@ const server = createServer((req, res) => {
       }
       if (req.method === 'POST' && url.pathname === '/api/alerts/subscribe') {
         if (limited(req, 'subscribe', 5)) throw new ApiError(429, 'Too many requests. Try again in a minute.')
+        if (!base) throw new ApiError(503, 'Alerts are not configured on this server.')
         const body = await readJson(req)
         return send(res, 200, await subscribe(body.email, body.address, base))
       }

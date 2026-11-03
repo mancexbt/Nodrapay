@@ -81,7 +81,7 @@ export function EmailSignIn({ open, onClose }: { open: boolean; onClose: () => v
   }
 
   return (
-    <Sheet open={open} onClose={onClose} eyebrow="Account" title="Sign in with email">
+    <Sheet open={open} onClose={onClose} eyebrow="Account" title="Sign up with email">
       <p className="text-pretty text-sm" style={{ color: 'var(--muted)' }}>
         No wallet extension needed. Circle emails you a one-time code, then sets up a wallet that only you control with a PIN you choose.
       </p>

@@ -107,7 +107,7 @@ export function Overview({ data, loading, now, balance, onOpen, onEmail }: { dat
               </ConnectKitButton.Custom>
               {onEmail && (
                 <button className="btn btn-ghost" onClick={onEmail}>
-                  Continue with email
+                  Sign up with email
                 </button>
               )}
               <button className="btn btn-ghost" onClick={() => onOpen('escrow')}>

@@ -134,7 +134,7 @@ export default function App() {
         <>
           {emailEnabled && (
             <button className="btn btn-ghost btn-sm" onClick={() => setEmailOpen(true)}>
-              Sign in with email
+              Sign up with email
             </button>
           )}
           <ConnectKitButton showAvatar={false} />

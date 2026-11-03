@@ -37,7 +37,7 @@ export function GetStarted({
           </ConnectKitButton.Custom>
           {onEmail && (
             <button className="btn btn-ghost btn-sm" onClick={onEmail}>
-              Use email
+              Sign up with email
             </button>
           )}
         </div>

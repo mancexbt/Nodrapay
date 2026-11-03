@@ -1,12 +1,10 @@
 import { TAGLINE } from '@/lib/network'
 import { useMemo } from 'react'
-import { ConnectKitButton } from 'connectkit'
 import { useAccount } from '@/hooks/useAccount'
+import { FlowGraphic } from '@/components/FlowGraphic'
 import { Identity } from '@/components/table'
 import { Activity } from '@/components/Activity'
 import { AlertsCard } from '@/components/AlertsCard'
-import { GetStarted } from '@/components/GettingStarted'
-import { About, Landing } from '@/components/Landing'
 import { useActivity } from '@/hooks/useActivity'
 import type { VaultData } from '@/hooks/useVaultData'
 import { PLAN_PAGES, type PageId } from '@/lib/plans'
@@ -25,7 +23,7 @@ import {
   type KindId,
 } from '@/lib/vault'
 
-export function Overview({ data, loading, now, balance, onOpen, onEmail }: { data?: VaultData; loading: boolean; now: bigint; balance?: bigint; onOpen: (page: PageId) => void; onEmail?: () => void }) {
+export function Overview({ data, loading, now, onOpen }: { data?: VaultData; loading: boolean; now: bigint; onOpen: (page: PageId) => void }) {
   const { address, isConnected } = useAccount()
   const activity = useActivity(address, data)
 
@@ -90,41 +88,17 @@ export function Overview({ data, loading, now, balance, onOpen, onEmail }: { dat
           ))}
         </ul>
         <div className="mt-6 flex flex-wrap items-center gap-2">
-          {isConnected ? (
-            <>
-              <button className="btn btn-primary" onClick={() => onOpen('escrow')}>
-                Open the app
-              </button>
-            </>
-          ) : (
-            <>
-              <ConnectKitButton.Custom>
-                {({ show }) => (
-                  <button className="btn btn-primary" onClick={show}>
-                    Connect wallet
-                  </button>
-                )}
-              </ConnectKitButton.Custom>
-              {onEmail && (
-                <button className="btn btn-ghost" onClick={onEmail}>
-                  Sign up with email
-                </button>
-              )}
-              <button className="btn btn-ghost" onClick={() => onOpen('escrow')}>
-                Open the app
-              </button>
-            </>
-          )}
+          <button className="btn btn-primary" onClick={() => onOpen('escrow')}>
+            Open the app
+          </button>
+          <a href="#/about" className="btn btn-ghost">
+            About Nodra
+          </a>
         </div>
+        <FlowGraphic />
       </section>
 
-      {!loading && <GetStarted isConnected={isConnected} balance={balance} data={data} onBrowse={() => onOpen('escrow')} onEmail={onEmail} />}
-
-      {!isConnected && <Landing onOpen={onOpen} />}
-
       {isConnected && <AlertsCard />}
-
-      <About />
 
       {isConnected && summary.actions.length > 0 && (
         <section className="card p-5" aria-label="Needs your action">
@@ -179,18 +153,6 @@ export function Overview({ data, loading, now, balance, onOpen, onEmail }: { dat
         <Activity items={(activity.data?.items ?? []).slice(0, 5)} loading={loading || activity.isLoading} now={now} />
       </div>
       )}
-
-      <section className="card flex flex-wrap items-center justify-between gap-3 px-5 py-4" aria-label="Open the app">
-        <div>
-          <p className="display text-base font-semibold">Everything else is in the app</p>
-          <p className="text-sm" style={{ color: 'var(--muted)' }}>
-            Escrows, scheduled payouts, payroll, vesting and treasury lockups, each with its own list and tools.
-          </p>
-        </div>
-        <button className="btn btn-primary" onClick={() => onOpen('escrow')}>
-          Open the app
-        </button>
-      </section>
     </div>
   )
 }

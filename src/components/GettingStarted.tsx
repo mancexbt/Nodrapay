@@ -1,5 +1,4 @@
 import { Check } from 'lucide-react'
-import { ConnectKitButton } from 'connectkit'
 import type { VaultData } from '@/hooks/useVaultData'
 import { IS_MAINNET } from '@/lib/network'
 
@@ -9,13 +8,11 @@ export function GetStarted({
   balance,
   data,
   onBrowse,
-  onEmail,
 }: {
   isConnected: boolean
   balance?: bigint
   data?: VaultData
   onBrowse: () => void
-  onEmail?: () => void
 }) {
   const hasFunds = isConnected && (balance ?? 0n) > 0n
   const hasPlan = (data?.escrows.length ?? 0) + (data?.schedules.length ?? 0) > 0
@@ -25,22 +22,11 @@ export function GetStarted({
   const cards = [
     {
       title: 'Connect',
-      body: 'Use your wallet, or sign in with just an email address.',
-      actions: isConnected ? null : (
-        <div className="flex flex-wrap gap-2">
-          <ConnectKitButton.Custom>
-            {({ show }) => (
-              <button className="btn btn-primary btn-sm" onClick={show}>
-                Connect wallet
-              </button>
-            )}
-          </ConnectKitButton.Custom>
-          {onEmail && (
-            <button className="btn btn-ghost btn-sm" onClick={onEmail}>
-              Sign up with email
-            </button>
-          )}
-        </div>
+      body: 'In the app, connect your wallet or sign up with just an email address.',
+      actions: (
+        <button className="btn btn-primary btn-sm" onClick={onBrowse}>
+          Open the app
+        </button>
       ),
     },
     {

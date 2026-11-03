@@ -3,6 +3,8 @@ import { Check, Copy, Download, Search } from 'lucide-react'
 import { ConnectKitButton } from 'connectkit'
 import { EmptyState, Segmented } from '@/components/ui'
 import { shortAddr, type SortKey } from '@/lib/vault'
+import { useSession } from '@/lib/session'
+import { IS_MAINNET } from '@/lib/network'
 
 export type Direction = 'all' | 'in' | 'out'
 
@@ -146,19 +148,27 @@ export function CopyButton({ value, label = 'Copy' }: { value: string; label?: s
 }
 
 export function ConnectEmpty() {
+  const { openEmail } = useSession()
   return (
     <div className="card">
       <EmptyState
         title="Connect your wallet"
         body="Connect to see the payouts you send and receive, and to create new ones."
         action={
-          <ConnectKitButton.Custom>
-            {({ show }) => (
-              <button className="btn btn-primary" onClick={show}>
-                Connect wallet
+          <div className="flex flex-wrap justify-center gap-2">
+            <ConnectKitButton.Custom>
+              {({ show }) => (
+                <button className="btn btn-primary" onClick={show}>
+                  Connect wallet
+                </button>
+              )}
+            </ConnectKitButton.Custom>
+            {!IS_MAINNET && (
+              <button className="btn btn-ghost" onClick={openEmail}>
+                Sign up with email
               </button>
             )}
-          </ConnectKitButton.Custom>
+          </div>
         }
       />
     </div>

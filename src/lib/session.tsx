@@ -14,14 +14,20 @@ interface SessionValue {
   session: EmailSession | null
   setSession: (s: EmailSession | null) => void
   signOut: () => void
+  emailOpen: boolean
+  openEmail: () => void
+  closeEmail: () => void
 }
 
-const SessionContext = createContext<SessionValue>({ session: null, setSession: () => {}, signOut: () => {} })
+const SessionContext = createContext<SessionValue>({ session: null, setSession: () => {}, signOut: () => {}, emailOpen: false, openEmail: () => {}, closeEmail: () => {} })
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<EmailSession | null>(null)
+  const [emailOpen, setEmailOpen] = useState(false)
   const signOut = useCallback(() => setSession(null), [])
-  const value = useMemo(() => ({ session, setSession, signOut }), [session, signOut])
+  const openEmail = useCallback(() => setEmailOpen(true), [])
+  const closeEmail = useCallback(() => setEmailOpen(false), [])
+  const value = useMemo(() => ({ session, setSession, signOut, emailOpen, openEmail, closeEmail }), [session, signOut, emailOpen, openEmail, closeEmail])
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
 }
 

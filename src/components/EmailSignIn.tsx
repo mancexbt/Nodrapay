@@ -3,7 +3,7 @@ import { Loader2, Mail } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Address } from 'viem'
 import { Field, Sheet } from '@/components/ui'
-import { ApiRequestError, circleCall } from '@/lib/api'
+import { ApiRequestError, circleCall, useEmailWalletsEnabled } from '@/lib/api'
 import { runChallenge, requestEmailCode, verifyEmailCode, type LoginResult } from '@/lib/circleSdk'
 import { useSession } from '@/lib/session'
 
@@ -15,7 +15,17 @@ interface CircleWallet {
 
 const NETWORK_WALLET = 'ARC-TESTNET'
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
-const errorText = (e: unknown) => (e instanceof Error ? e.message : 'Something went wrong. Please try again.')
+/** Circle's SDK throws plain objects ({ code, message }) as well as Errors, so read both shapes. */
+function errorText(e: unknown): string {
+  console.error('[email sign-up]', e)
+  if (e instanceof Error) return e.message
+  if (e && typeof e === 'object') {
+    const { message, code } = e as { message?: unknown; code?: string | number }
+    if (typeof message === 'string' && message) return code !== undefined ? `${message} (code ${code})` : message
+    if (code !== undefined) return `Circle returned code ${code}.`
+  }
+  return typeof e === 'string' && e ? e : 'Something went wrong. Please try again.'
+}
 
 async function listWallets(login: LoginResult): Promise<CircleWallet[]> {
   const { wallets } = await circleCall<{ wallets: CircleWallet[] }>('listWallets', { userToken: login.userToken })
@@ -25,6 +35,7 @@ async function listWallets(login: LoginResult): Promise<CircleWallet[]> {
 /** Email sign-up: Circle emails a one-time code, then creates a PIN-protected wallet for the person. */
 export function EmailSignIn({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { setSession } = useSession()
+  const available = useEmailWalletsEnabled()
   const [email, setEmail] = useState('')
   const [step, setStep] = useState<'email' | 'code' | 'wallet'>('email')
   const [busy, setBusy] = useState(false)
@@ -86,7 +97,16 @@ export function EmailSignIn({ open, onClose }: { open: boolean; onClose: () => v
         No wallet extension needed. Circle emails you a one-time code, then sets up a wallet that only you control with a PIN you choose.
       </p>
 
-      {step === 'email' && (
+      {!available && (
+        <div className="inner space-y-1.5 p-4" role="status">
+          <p className="text-sm font-semibold">Email sign-up isn&apos;t switched on for this site yet.</p>
+          <p className="text-pretty text-sm" style={{ color: 'var(--muted)' }}>
+            You can still connect a wallet to use Nodra today. Email sign-up will appear here once it is set up.
+          </p>
+        </div>
+      )}
+
+      {available && step === 'email' && (
         <>
           <Field label="Email address">
             <input className="field" type="email" inputMode="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
@@ -97,7 +117,7 @@ export function EmailSignIn({ open, onClose }: { open: boolean; onClose: () => v
         </>
       )}
 
-      {step === 'code' && (
+      {available && step === 'code' && (
         <div className="space-y-3">
           <p className="inner p-3 text-sm">
             A code is on its way to <span className="font-semibold">{email.trim()}</span>. Click below to enter it in Circle&apos;s secure window.
@@ -111,7 +131,7 @@ export function EmailSignIn({ open, onClose }: { open: boolean; onClose: () => v
         </div>
       )}
 
-      {step === 'wallet' && (
+      {available && step === 'wallet' && (
         <p className="inner flex items-center gap-2 p-3 text-sm">
           <Loader2 className="size-4 animate-spin" /> Setting up your wallet. If a Circle window opens, choose your PIN there.
         </p>
@@ -123,9 +143,11 @@ export function EmailSignIn({ open, onClose }: { open: boolean; onClose: () => v
         </p>
       )}
 
+      {available && (
       <p className="text-pretty text-xs" style={{ color: 'var(--subtle)' }}>
         Nodra and Circle cannot recover your PIN or wallet if you lose access to your email and PIN. This wallet lives on Arc Testnet, and you fund it by sending test USDC to its address.
       </p>
+      )}
     </Sheet>
   )
 }

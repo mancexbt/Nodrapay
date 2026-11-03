@@ -2,6 +2,8 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ConnectKitButton } from 'connectkit'
 import { useAccount } from '@/hooks/useAccount'
+import { useSession } from '@/lib/session'
+import { IS_MAINNET } from '@/lib/network'
 import { AlertCircle, Loader2, X } from 'lucide-react'
 import { DURATION_UNITS, fmtToken, type DurationUnitId } from '@/lib/vault'
 import type { TxPhase } from '@/hooks/useVaultTx'
@@ -265,17 +267,25 @@ export function TxButton({
   small?: boolean
 }) {
   const { isConnected } = useAccount()
+  const { openEmail } = useSession()
   const cls = `btn ${tone === 'primary' ? 'btn-primary' : tone === 'ghost' ? 'btn-ghost' : 'btn-danger'} ${small ? 'btn-sm' : 'w-full'}`
 
   if (!isConnected) {
     return (
-      <ConnectKitButton.Custom>
-        {({ show }) => (
-          <button className={cls} onClick={show}>
-            Connect wallet
+      <div className={small ? 'flex flex-wrap gap-2' : 'space-y-2'}>
+        <ConnectKitButton.Custom>
+          {({ show }) => (
+            <button className={cls} onClick={show}>
+              Connect wallet
+            </button>
+          )}
+        </ConnectKitButton.Custom>
+        {!IS_MAINNET && (
+          <button className={`btn btn-ghost ${small ? 'btn-sm' : 'w-full'}`} onClick={openEmail}>
+            Or sign up with email
           </button>
         )}
-      </ConnectKitButton.Custom>
+      </div>
     )
   }
 

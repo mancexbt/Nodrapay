@@ -6,7 +6,7 @@ Built with [Arc Studio](https://studio.arc.io)
 
 ## Features
 
-- Two pages: a front page with the overview and a get-started guide, and the app with escrow, scheduled payouts, payroll, vesting and treasury lockups
+- Three pages: a short front page, an About page (get started, how it works, what it can do), and the app with escrow, scheduled payouts, payroll, vesting and treasury lockups
 - Escrow with named milestones (custom amounts or one total split evenly), an optional arbiter, partial releases, and refunds after a deadline
 - Recipient claim: if nobody releases or refunds after the deadline and a grace period, the recipient can claim what is left
 - One dispute per escrow, which pauses the recipient's claim for 30 days without freezing the funds

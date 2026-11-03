@@ -4,7 +4,6 @@ import { ConnectKitButton } from 'connectkit'
 import { useAccount } from '@/hooks/useAccount'
 import { AccountMenu } from '@/components/AccountMenu'
 import { EmailSignIn } from '@/components/EmailSignIn'
-import { useEmailWalletsEnabled } from '@/lib/api'
 import { useSession } from '@/lib/session'
 import { navigate, useRoute } from '@/hooks/useRoute'
 import {
@@ -23,6 +22,7 @@ import {
   Vault,
 } from 'lucide-react'
 import { TokenUSDC } from '@web3icons/react'
+import { AboutPage } from '@/components/AboutPage'
 import { Overview } from '@/components/Overview'
 import { EscrowPage } from '@/components/EscrowPage'
 import { SchedulePage } from '@/components/SchedulePage'
@@ -67,17 +67,18 @@ const GROUPS: NavGroup[] = ['payments', 'plans', 'locks']
 
 export default function App() {
   const { address, isConnected } = useAccount()
-  const { session } = useSession()
-  const emailEnabled = useEmailWalletsEnabled()
-  const [emailOpen, setEmailOpen] = useState(false)
+  const { session, emailOpen, openEmail, closeEmail } = useSession()
+  /** The email option is offered everywhere a wallet can be connected, except on mainnet. */
+  const emailEnabled = !IS_MAINNET
   const { data, isLoading, isError } = useVaultData(address)
   const { data: balance } = useUsdcBalance()
   const activity = useActivity(address, data)
   const now = useNow(1000)
   const route = useRoute()
-  const page: PageId = route.name === 'home' ? 'overview' : route.page
+  const page: PageId = route.name === 'app' ? route.page : 'overview'
   const setPage = navigate
-  const isHome = page === 'overview'
+  const isLanding = route.name !== 'app'
+  const isAbout = route.name === 'about'
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [page])
@@ -133,7 +134,7 @@ export default function App() {
       ) : (
         <>
           {emailEnabled && (
-            <button className="btn btn-ghost btn-sm" onClick={() => setEmailOpen(true)}>
+            <button className="btn btn-ghost btn-sm" onClick={openEmail}>
               Sign up with email
             </button>
           )}
@@ -159,7 +160,7 @@ export default function App() {
 
   const overlays = (
     <>
-      {emailEnabled && <EmailSignIn open={emailOpen} onClose={() => setEmailOpen(false)} />}
+      {emailEnabled && <EmailSignIn open={emailOpen} onClose={closeEmail} />}
       <CreateEscrow key={`escrow-${openCount}`} open={creating === 'escrow'} onClose={close} />
       <CreatePayroll key={`payroll-${openCount}`} open={creating === 'payroll'} onClose={close} />
       {schedulePlan && <CreateSchedule key={`${schedulePlan.id}-${openCount}`} plan={schedulePlan} open={creating === schedulePlan.id} onClose={close} />}
@@ -167,10 +168,10 @@ export default function App() {
   )
 
   const overview = (
-    <Overview data={data} loading={loading} now={now} balance={balance} onOpen={setPage} onEmail={emailEnabled ? () => setEmailOpen(true) : undefined} />
+    <Overview data={data} loading={loading} now={now} onOpen={setPage} />
   )
 
-  if (isHome) {
+  if (isLanding) {
     return (
       <div className="min-h-dvh">
         <header className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-4 py-4 md:px-8">
@@ -181,13 +182,12 @@ export default function App() {
             <span className="display text-lg font-bold">Nodra</span>
           </a>
           <div className="flex items-center gap-2">
-            <a href="#about" className="btn btn-ghost btn-sm">
-              About
+            <a href={isAbout ? '#/' : '#/about'} className="btn btn-ghost btn-sm">
+              {isAbout ? 'Home' : 'About'}
             </a>
-            <button className="btn btn-ghost btn-sm" onClick={() => setPage('escrow')}>
+            <button className="btn btn-primary btn-sm" onClick={() => setPage('escrow')}>
               Open app
             </button>
-            {accountControls}
           </div>
         </header>
         <ActivityContext.Provider value={activity.data}>
@@ -198,7 +198,7 @@ export default function App() {
                 Could not load your payouts. Check your connection and try again.
               </p>
             )}
-            {overview}
+            {isAbout ? <AboutPage data={data} loading={loading} balance={balance} onOpen={setPage} /> : overview}
           </main>
         </ActivityContext.Provider>
         {footer}

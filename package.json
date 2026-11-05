@@ -15,6 +15,7 @@
     "contracts:test": "forge test",
     "build:mainnet": "vite build --mode mainnet",
     "build:testnet": "vite build --mode testnet",
+    "start": "bun run server/index.ts",
     "server": "bun run server/index.ts"
   },
   "dependencies": {

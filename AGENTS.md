@@ -37,7 +37,7 @@ bun install
 bun run dev
 ```
 
-- Arc mainnet vault (deployed by the user via Remix): 0x75b26d58e7c62777f34cd0a4be7884ebec485e8e, block 29062486. Config in .env.mainnet; the dev server and Netlify site stay on Arc Testnet.
+- Arc mainnet vault (deployed by the user via Remix): 0x6ae2b887501bacA2400b62DB91a57c0fA58A754F, block 29708629. Config in .env.mainnet; the dev server and Netlify site stay on Arc Testnet.
 - The project .env now targets Arc mainnet (VITE_NETWORK=mainnet). Testnet values are in .env.testnet. The Netlify site (nodrapay.netlify.app) was built from the testnet config and has not been changed.
 - Email sign-up and alerts: server in server/ (bun run server, port 8787), Vite proxies /api. Circle user-controlled wallets (email OTP, SCA, ARC-TESTNET only; hidden on mainnet). Needs VITE_CIRCLE_APP_ID in .env and SMTP configured in the Circle Console. Alerts need SMTP_* in .env (or ALERTS_DRY_RUN=1). Email session tokens are kept in memory only. The server only forwards vault calls and vault-spender approvals. The dev preview is run with `--mode testnet` so the email option is visible; .env still targets mainnet.
 - Three-page layout with hash routing (src/hooks/useRoute.ts): #/ is the front page (src/components/Overview.tsx), #/about is the About page (Get started + About, src/components/AboutPage.tsx), #/app/<section> is the app with the sidebar.

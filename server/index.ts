@@ -1,7 +1,27 @@
+import { existsSync, readFileSync, statSync } from 'node:fs'
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
+import { extname, join, normalize, resolve } from 'node:path'
 import { ApiError, handleCircle } from './circle'
 import { ALERTS_DRY_RUN, ALERTS_ENABLED, CIRCLE_API_KEY, PORT, PUBLIC_URL } from './env'
 import { confirm, runNotifier, subscribe, unsubscribe } from './alerts'
+
+const DIST = resolve('dist')
+const TYPES: Record<string, string> = {
+  '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json',
+  '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.ico': 'image/x-icon', '.woff': 'font/woff', '.woff2': 'font/woff2', '.map': 'application/json', '.wasm': 'application/wasm',
+}
+/** Serves the built site from dist/ when it exists. Unknown paths get index.html so deep links and refreshes work. */
+function serveStatic(pathname: string, res: ServerResponse): boolean {
+  if (!existsSync(DIST)) return false
+  let file = normalize(join(DIST, decodeURIComponent(pathname)))
+  if (!file.startsWith(DIST)) return false
+  if (!existsSync(file) || !statSync(file).isFile()) file = join(DIST, 'index.html')
+  if (!existsSync(file)) return false
+  const hashed = file.includes(`${DIST}/assets/`)
+  res.writeHead(200, { 'Content-Type': TYPES[extname(file)] ?? 'application/octet-stream', 'Cache-Control': hashed ? 'public, max-age=31536000, immutable' : 'no-cache' })
+  res.end(readFileSync(file))
+  return true
+}
 
 const hits = new Map<string, { n: number; reset: number }>()
 /** Browsers allowed to call this API from another address (comma separated). Same-origin needs no entry. */
@@ -88,6 +108,7 @@ const server = createServer((req, res) => {
           ? page(res, 'Unsubscribed', 'You will not get any more Nodra alert emails.')
           : page(res, 'Link not valid', 'This link is invalid or you are already unsubscribed.')
       }
+      if (req.method === 'GET' && !url.pathname.startsWith('/api/') && serveStatic(url.pathname, res)) return
       return send(res, 404, { error: 'Not found' })
     } catch (e) {
       if (e instanceof ApiError) return send(res, e.status, { error: e.message, code: e.code })

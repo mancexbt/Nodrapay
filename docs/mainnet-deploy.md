@@ -51,6 +51,6 @@ In Remix, compile with solc 0.8.28, EVM version `cancun`, optimizer on with 200 
 
 ## Your mainnet deployment (recorded)
 - Network: Arc mainnet (chain ID 5042)
-- Contract: `0x75b26d58e7c62777f34cd0a4be7884ebec485e8e` (deployed in block 29062486, deployer `0xf846339d05dbbbd92bdccb297b7f8269b236e9b5`)
+- Contract: `0x6ae2b887501bacA2400b62DB91a57c0fA58A754F` (deployed in block 29708629, deployer `0xf846339d05dbbbd92bdccb297b7f8269b236e9b5`)
 - A read check shows `nextEscrowId` = 1, and the deployed code matches the tested build apart from the compiler metadata.
 - App config lives in `.env.mainnet`. Build the mainnet app with `bun run build:mainnet` and host `dist/` yourself.
